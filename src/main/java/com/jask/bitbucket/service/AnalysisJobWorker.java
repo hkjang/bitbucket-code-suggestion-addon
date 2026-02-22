@@ -1,8 +1,10 @@
 package com.jask.bitbucket.service;
 
 import com.google.gson.Gson;
+import com.jask.bitbucket.config.PluginSettingsService;
 import com.jask.bitbucket.model.AnalysisRequest;
 import com.jask.bitbucket.model.AnalysisResponse;
+import com.jask.bitbucket.model.CodeSuggestion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +32,7 @@ public class AnalysisJobWorker {
     private final AnalysisJobService jobService;
     private final CodeAnalysisService codeAnalysisService;
     private final SuggestionService suggestionService;
+    private final AnalysisVersionService versionService;
     private final Gson gson;
     private final String nodeId;
 
@@ -38,10 +41,12 @@ public class AnalysisJobWorker {
     @Inject
     public AnalysisJobWorker(AnalysisJobService jobService,
                               CodeAnalysisService codeAnalysisService,
-                              SuggestionService suggestionService) {
+                              SuggestionService suggestionService,
+                              AnalysisVersionService versionService) {
         this.jobService = jobService;
         this.codeAnalysisService = codeAnalysisService;
         this.suggestionService = suggestionService;
+        this.versionService = versionService;
         this.gson = new Gson();
         this.nodeId = resolveNodeId();
     }
@@ -123,6 +128,8 @@ public class AnalysisJobWorker {
             }
 
             if (response.isSuccess() && response.getSuggestions() != null) {
+                int suggestionCount = response.getSuggestions().size();
+
                 // 제안 저장
                 if (!response.getSuggestions().isEmpty()) {
                     suggestionService.saveSuggestions(
@@ -131,9 +138,16 @@ public class AnalysisJobWorker {
                             response.getSuggestions());
                 }
 
-                jobService.completeJob(jobId, response.getSuggestions().size());
+                // 버전 기록 생성
+                recordVersion(request, response, "COMPLETED");
+
+                jobService.completeJob(jobId, suggestionCount);
             } else {
                 String errorMsg = response.getError() != null ? response.getError() : "분석 결과 없음";
+
+                // 실패 버전도 기록
+                recordVersion(request, response, "FAILED");
+
                 jobService.failJob(jobId, errorMsg);
             }
 
@@ -153,6 +167,42 @@ public class AnalysisJobWorker {
             return ((AnalysisJobServiceImpl) jobService).getRequestPayload(jobId);
         }
         return null;
+    }
+
+    /**
+     * 분석 버전 기록을 생성합니다.
+     */
+    private void recordVersion(AnalysisRequest request, AnalysisResponse response, String status) {
+        try {
+            AnalysisVersionService.CreateVersionRequest vReq = new AnalysisVersionService.CreateVersionRequest();
+            vReq.setPullRequestId(request.getPullRequestId());
+            vReq.setRepositoryId(request.getRepositoryId());
+            vReq.setAnalyzedBy(request.getProjectKey() != null ? request.getProjectKey() : "system");
+            vReq.setStatus(status);
+
+            if (response != null) {
+                int total = 0, critical = 0, warning = 0;
+                if (response.getSuggestions() != null) {
+                    total = response.getSuggestions().size();
+                    for (CodeSuggestion s : response.getSuggestions()) {
+                        if (s.getSeverity() == CodeSuggestion.Severity.CRITICAL) critical++;
+                        if (s.getSeverity() == CodeSuggestion.Severity.WARNING) warning++;
+                    }
+                }
+                vReq.setSuggestionCount(total);
+                vReq.setCriticalCount(critical);
+                vReq.setWarningCount(warning);
+                vReq.setAnalysisTimeMs(response.getAnalysisTimeMs());
+
+                if (response.getSummary() != null) {
+                    vReq.setQualityScore(response.getSummary().getOverallScore());
+                }
+            }
+
+            versionService.createVersion(vReq);
+        } catch (Exception e) {
+            log.warn("버전 기록 생성 실패: {}", e.getMessage());
+        }
     }
 
     private String resolveNodeId() {

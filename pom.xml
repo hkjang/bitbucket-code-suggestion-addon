@@ -147,6 +147,20 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- UPM License API (마켓플레이스 라이선스 관리) -->
+        <dependency>
+            <groupId>com.atlassian.upm</groupId>
+            <artifactId>licensing-api</artifactId>
+            <version>4.3.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.atlassian.fugue</groupId>
+            <artifactId>fugue</artifactId>
+            <version>4.7.2</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
             <groupId>junit</groupId>
@@ -185,6 +199,8 @@
                             com.atlassian.bitbucket.*,
                             com.atlassian.sal.*,
                             com.atlassian.activeobjects.*,
+                            com.atlassian.upm.api.license.*;resolution:=optional,
+                            com.atlassian.fugue;resolution:=optional,
                             javax.inject,
                             javax.servlet.*,
                             javax.ws.rs.*,

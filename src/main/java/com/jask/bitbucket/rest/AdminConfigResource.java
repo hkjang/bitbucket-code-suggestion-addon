@@ -5,7 +5,9 @@ import com.jask.bitbucket.config.PluginSettingsService;
 import com.jask.bitbucket.security.EndpointValidator;
 import com.jask.bitbucket.security.PermissionCheckService;
 import com.jask.bitbucket.service.AuditLogService;
+import com.jask.bitbucket.service.ClusterJobManager;
 import com.jask.bitbucket.service.LlmClientService;
+import com.jask.bitbucket.service.MetricsService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,6 +36,8 @@ public class AdminConfigResource {
     private final LlmClientService llmClientService;
     private final PermissionCheckService permissionCheck;
     private final AuditLogService auditLogService;
+    private final ClusterJobManager clusterJobManager;
+    private final MetricsService metricsService;
     private final Gson gson;
 
     @Context
@@ -43,11 +47,15 @@ public class AdminConfigResource {
     public AdminConfigResource(PluginSettingsService settingsService,
                                 LlmClientService llmClientService,
                                 PermissionCheckService permissionCheck,
-                                AuditLogService auditLogService) {
+                                AuditLogService auditLogService,
+                                ClusterJobManager clusterJobManager,
+                                MetricsService metricsService) {
         this.settingsService = settingsService;
         this.llmClientService = llmClientService;
         this.permissionCheck = permissionCheck;
         this.auditLogService = auditLogService;
+        this.clusterJobManager = clusterJobManager;
+        this.metricsService = metricsService;
         this.gson = new Gson();
     }
 
@@ -230,6 +238,29 @@ public class AdminConfigResource {
     }
 
     /**
+     * Get cluster job statistics.
+     *
+     * GET /rest/code-suggestion/1.0/admin/cluster-stats
+     * 필요 권한: SYS_ADMIN
+     */
+    @GET
+    @Path("/cluster-stats")
+    public Response getClusterStats() {
+        permissionCheck.requireSysAdmin(httpRequest);
+
+        try {
+            ClusterJobManager.ClusterJobStats stats = clusterJobManager.getClusterStats();
+            return Response.ok(gson.toJson(stats)).build();
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", "클러스터 통계 조회 실패: " + e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(gson.toJson(error)).build();
+        }
+    }
+
+    /**
      * Test LLM connection.
      *
      * POST /rest/code-suggestion/1.0/admin/test-connection
@@ -253,6 +284,52 @@ public class AdminConfigResource {
             result.put("message", "LLM 서비스 연결에 실패했습니다. 엔드포인트 및 네트워크 설정을 확인해주세요.");
         }
 
+        return Response.ok(gson.toJson(result)).build();
+    }
+
+    /**
+     * Get plugin metrics.
+     *
+     * GET /rest/code-suggestion/1.0/admin/metrics
+     * 필요 권한: SYS_ADMIN
+     */
+    @GET
+    @Path("/metrics")
+    public Response getMetrics() {
+        permissionCheck.requireSysAdmin(httpRequest);
+
+        try {
+            Map<String, Object> metrics = metricsService.getAllMetrics();
+            return Response.ok(gson.toJson(metrics)).build();
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", "메트릭 조회 실패: " + e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(gson.toJson(error)).build();
+        }
+    }
+
+    /**
+     * Reset plugin metrics.
+     *
+     * DELETE /rest/code-suggestion/1.0/admin/metrics
+     * 필요 권한: SYS_ADMIN
+     */
+    @DELETE
+    @Path("/metrics")
+    public Response resetMetrics() {
+        permissionCheck.requireSysAdmin(httpRequest);
+
+        metricsService.reset();
+
+        String username = permissionCheck.getUsername(httpRequest);
+        String ip = httpRequest != null ? httpRequest.getRemoteAddr() : "unknown";
+        auditLogService.log("METRICS_RESET", username, "METRICS", null, null, ip);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", "메트릭이 초기화되었습니다.");
         return Response.ok(gson.toJson(result)).build();
     }
 }

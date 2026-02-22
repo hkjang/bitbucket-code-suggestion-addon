@@ -93,4 +93,17 @@ public interface AnalysisJobEntity extends Entity {
 
     long getCompletedAt();
     void setCompletedAt(long completedAt);
+
+    /**
+     * 마지막 업데이트 시각 (스톨 잡 감지용)
+     */
+    @Indexed
+    long getUpdatedAt();
+    void setUpdatedAt(long updatedAt);
+
+    /**
+     * 처리 노드 ID (DC 클러스터 환경)
+     */
+    String getNodeId();
+    void setNodeId(String nodeId);
 }

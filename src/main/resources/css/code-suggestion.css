@@ -378,6 +378,12 @@
     border-top: 1px solid #f0f1f3;
 }
 
+.jask-comment-btn.jask-commented {
+    color: #36b37e !important;
+    cursor: default;
+    pointer-events: none;
+}
+
 /* No Results */
 .jask-no-results {
     text-align: center;
@@ -509,6 +515,192 @@
     font-size: 11px !important;
     padding: 2px 8px !important;
 }
+
+/* =============================================
+   Analysis Options Panel
+   ============================================= */
+
+.jask-analysis-options {
+    background: #f4f5f7;
+    border: 1px solid #dfe1e6;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.jask-options-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #172b4d;
+    margin-bottom: 10px;
+}
+
+.jask-options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+}
+
+.jask-option-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #42526e;
+    cursor: pointer;
+    user-select: none;
+}
+
+.jask-option-item input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.jask-option-item:hover {
+    color: #0052cc;
+}
+
+#jask-options-toggle.expanded,
+#jask-version-toggle.expanded {
+    background: #deebff !important;
+    color: #0052cc !important;
+}
+
+/* =============================================
+   Version History Panel
+   ============================================= */
+
+.jask-version-history {
+    background: #f4f5f7;
+    border: 1px solid #dfe1e6;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.jask-version-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.jask-version-item {
+    background: #fff;
+    border: 1px solid #e8e8ee;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    transition: border-color 0.15s;
+}
+
+.jask-version-item:hover {
+    border-color: #b3d4ff;
+}
+
+.jask-version-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.jask-version-badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: #0052cc;
+    color: #fff;
+}
+
+.jask-version-score {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.jask-version-score.jask-score-good { color: #36b37e; }
+.jask-version-score.jask-score-warning { color: #ff991f; }
+.jask-version-score.jask-score-critical { color: #de350b; }
+
+.jask-version-stats {
+    font-size: 12px;
+    color: #6b778c;
+}
+
+.jask-version-date {
+    font-size: 11px;
+    color: #97a0af;
+    margin-left: auto;
+}
+
+.jask-version-compare {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #dfe1e6;
+}
+
+.jask-compare-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.jask-compare-controls label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #42526e;
+}
+
+.jask-compare-controls select {
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid #dfe1e6;
+    border-radius: 3px;
+    max-width: 200px;
+}
+
+.jask-compare-summary {
+    margin-top: 12px;
+    background: #fff;
+    border: 1px solid #dfe1e6;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.jask-compare-summary p {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #172b4d;
+}
+
+.jask-compare-grid {
+    display: flex;
+    gap: 12px;
+}
+
+.jask-delta-cell {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border-radius: 4px;
+    background: #f4f5f7;
+}
+
+.jask-delta-value {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.jask-delta-label {
+    font-size: 11px;
+    color: #6b778c;
+    margin-top: 2px;
+}
+
+.jask-delta-positive .jask-delta-value { color: #36b37e; }
+.jask-delta-negative .jask-delta-value { color: #de350b; }
+.jask-delta-neutral .jask-delta-value { color: #6b778c; }
 
 /* =============================================
    Responsive

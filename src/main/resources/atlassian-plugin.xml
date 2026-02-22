@@ -8,6 +8,9 @@
         <param name="plugin-logo">images/plugin-logo.png</param>
         <param name="atlassian-data-center-status">compatible</param>
         <param name="atlassian-data-center-compatible">true</param>
+        <param name="atlassian-licensing-enabled">true</param>
+        <param name="plugin-type">both</param>
+        <param name="configure.url">/plugins/servlet/code-suggestion/admin</param>
     </plugin-info>
 
     <!-- ==================== Active Objects ==================== -->
@@ -17,6 +20,7 @@
         <entity>com.jask.bitbucket.ao.PluginSettingsEntity</entity>
         <entity>com.jask.bitbucket.ao.AnalysisJobEntity</entity>
         <entity>com.jask.bitbucket.ao.AuditLogEntity</entity>
+        <entity>com.jask.bitbucket.ao.AnalysisVersionEntity</entity>
     </ao>
 
     <!-- ==================== REST Resources ==================== -->

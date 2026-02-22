@@ -6,6 +6,8 @@ import com.jask.bitbucket.model.AnalysisResponse;
 import com.jask.bitbucket.model.CodeSuggestion;
 import com.jask.bitbucket.security.PermissionCheckService;
 import com.jask.bitbucket.service.AnalysisJobService;
+import com.jask.bitbucket.service.AnalysisVersionService;
+import com.jask.bitbucket.service.BitbucketCommentService;
 import com.jask.bitbucket.service.CodeAnalysisService;
 import com.jask.bitbucket.service.SuggestionService;
 
@@ -37,6 +39,8 @@ public class CodeSuggestionResource {
     private final CodeAnalysisService codeAnalysisService;
     private final SuggestionService suggestionService;
     private final AnalysisJobService analysisJobService;
+    private final AnalysisVersionService analysisVersionService;
+    private final BitbucketCommentService commentService;
     private final PermissionCheckService permissionCheck;
     private final Gson gson;
 
@@ -47,10 +51,14 @@ public class CodeSuggestionResource {
     public CodeSuggestionResource(CodeAnalysisService codeAnalysisService,
                                    SuggestionService suggestionService,
                                    AnalysisJobService analysisJobService,
+                                   AnalysisVersionService analysisVersionService,
+                                   BitbucketCommentService commentService,
                                    PermissionCheckService permissionCheck) {
         this.codeAnalysisService = codeAnalysisService;
         this.suggestionService = suggestionService;
         this.analysisJobService = analysisJobService;
+        this.analysisVersionService = analysisVersionService;
+        this.commentService = commentService;
         this.permissionCheck = permissionCheck;
         this.gson = new Gson();
     }
@@ -311,6 +319,154 @@ public class CodeSuggestionResource {
         } catch (Exception e) {
             return errorResponse(Response.Status.INTERNAL_SERVER_ERROR,
                     "제안 삭제 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get analysis version history for a PR.
+     *
+     * GET /rest/code-suggestion/1.0/versions/{repoId}/{prId}
+     * 필요 권한: 레포지토리 REPO_READ
+     */
+    @GET
+    @Path("/versions/{repoId}/{prId}")
+    public Response getVersionHistory(@PathParam("repoId") int repoId,
+                                       @PathParam("prId") long prId) {
+        try {
+            permissionCheck.requireRepoRead(httpRequest, repoId);
+
+            List<AnalysisVersionService.VersionInfo> versions =
+                    analysisVersionService.getVersionHistory(prId, repoId);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("versions", versions);
+            result.put("total", versions.size());
+            result.put("latestVersion", versions.isEmpty() ? 0 : versions.get(0).getVersion());
+
+            return Response.ok(gson.toJson(result)).build();
+        } catch (WebApplicationException e) {
+            throw e;
+        } catch (Exception e) {
+            return errorResponse(Response.Status.INTERNAL_SERVER_ERROR,
+                    "버전 히스토리 조회 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Compare two analysis versions.
+     *
+     * GET /rest/code-suggestion/1.0/versions/{repoId}/{prId}/compare?from=1&to=2
+     * 필요 권한: 레포지토리 REPO_READ
+     */
+    @GET
+    @Path("/versions/{repoId}/{prId}/compare")
+    public Response compareVersions(@PathParam("repoId") int repoId,
+                                     @PathParam("prId") long prId,
+                                     @QueryParam("from") int fromVersion,
+                                     @QueryParam("to") int toVersion) {
+        try {
+            permissionCheck.requireRepoRead(httpRequest, repoId);
+
+            if (fromVersion <= 0 || toVersion <= 0) {
+                return errorResponse(Response.Status.BAD_REQUEST,
+                        "from과 to 버전 번호가 필요합니다.");
+            }
+
+            AnalysisVersionService.VersionComparison comparison =
+                    analysisVersionService.compareVersions(prId, repoId, fromVersion, toVersion);
+
+            return Response.ok(gson.toJson(comparison)).build();
+        } catch (WebApplicationException e) {
+            throw e;
+        } catch (Exception e) {
+            return errorResponse(Response.Status.INTERNAL_SERVER_ERROR,
+                    "버전 비교 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Insert a suggestion as a PR inline comment.
+     *
+     * POST /rest/code-suggestion/1.0/suggestions/{suggestionId}/comment
+     * 필요 권한: 인증된 사용자
+     *
+     * Body: { "projectKey": "...", "repoSlug": "...", "prId": 123 }
+     */
+    @POST
+    @Path("/suggestions/{suggestionId}/comment")
+    public Response insertSuggestionAsComment(@PathParam("suggestionId") long suggestionId,
+                                               String requestBody) {
+        try {
+            permissionCheck.requireAuthentication(httpRequest);
+
+            Map<String, String> body = gson.fromJson(requestBody, Map.class);
+            String projectKey = body.get("projectKey");
+            String repoSlug = body.get("repoSlug");
+            String prIdStr = body.get("prId");
+
+            if (projectKey == null || repoSlug == null || prIdStr == null) {
+                return errorResponse(Response.Status.BAD_REQUEST,
+                        "projectKey, repoSlug, prId는 필수입니다.");
+            }
+
+            long prId = Long.parseLong(prIdStr);
+
+            // 제안 정보 조회 (SuggestionService 통해서)
+            // 일단 간단한 방식: 모든 제안에서 ID로 찾기
+            List<CodeSuggestion> suggestions = suggestionService.getSuggestions(prId, 0);
+            CodeSuggestion target = null;
+            for (CodeSuggestion s : suggestions) {
+                if (s.getId() == suggestionId) {
+                    target = s;
+                    break;
+                }
+            }
+
+            if (target == null) {
+                return errorResponse(Response.Status.NOT_FOUND, "제안을 찾을 수 없습니다: " + suggestionId);
+            }
+
+            // Format as comment
+            BitbucketCommentService.SuggestionCommentData commentData =
+                    new BitbucketCommentService.SuggestionCommentData();
+            commentData.setFilePath(target.getFilePath());
+            commentData.setStartLine(target.getStartLine());
+            commentData.setEndLine(target.getEndLine());
+            commentData.setOriginalCode(target.getOriginalCode());
+            commentData.setSuggestedCode(target.getSuggestedCode());
+            commentData.setExplanation(target.getExplanation());
+            commentData.setSeverity(target.getSeverity() != null ? target.getSeverity().name() : "INFO");
+            commentData.setCategory(target.getCategory() != null ? target.getCategory().name() : "BEST_PRACTICE");
+            commentData.setConfidence(target.getConfidence());
+
+            String commentText = commentService.formatSuggestionAsComment(commentData);
+
+            // Create inline comment (if line info available) or general comment
+            long commentId;
+            if (target.getStartLine() > 0 && target.getFilePath() != null) {
+                commentId = commentService.createInlineComment(
+                        projectKey, repoSlug, prId,
+                        target.getFilePath(), target.getStartLine(), commentText);
+            } else {
+                commentId = commentService.createPrComment(projectKey, repoSlug, prId, commentText);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            if (commentId > 0) {
+                result.put("success", true);
+                result.put("commentId", commentId);
+                result.put("message", "코멘트가 생성되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "코멘트 생성에 실패했습니다.");
+            }
+
+            return Response.ok(gson.toJson(result)).build();
+        } catch (WebApplicationException e) {
+            throw e;
+        } catch (Exception e) {
+            return errorResponse(Response.Status.INTERNAL_SERVER_ERROR,
+                    "코멘트 삽입 실패: " + e.getMessage());
         }
     }
 

@@ -4,10 +4,14 @@
  * PR 코드 제안 탭 메인 패널
  * @param pullRequestId
  * @param repositoryId
+ * @param? projectKey
+ * @param? repositorySlug
  */
 {template .suggestionPanel}
 <div id="jask-code-suggestions" class="jask-suggestions-container"
-     data-pr-id="{$pullRequestId}" data-repo-id="{$repositoryId}">
+     data-pr-id="{$pullRequestId}" data-repo-id="{$repositoryId}"
+     {if $projectKey}data-project-key="{$projectKey}"{/if}
+     {if $repositorySlug}data-repo-slug="{$repositorySlug}"{/if}>
 
     {call .header /}
 
@@ -53,6 +57,9 @@
         <button id="jask-options-toggle" class="aui-button aui-button-subtle" title="분석 옵션">
             <span class="aui-icon aui-icon-small aui-iconfont-configure"></span>
         </button>
+        <button id="jask-version-toggle" class="aui-button aui-button-subtle" title="버전 히스토리">
+            <span class="aui-icon aui-icon-small aui-iconfont-time"></span>
+        </button>
         <button id="jask-reanalyze-btn" class="aui-button" title="다시 분석">
             <span class="aui-icon aui-icon-small aui-iconfont-refresh"></span>
             다시 분석
@@ -68,6 +75,22 @@
         <label class="jask-option-item"><input type="checkbox" id="jask-opt-style" checked> 코드 스타일 (Style)</label>
         <label class="jask-option-item"><input type="checkbox" id="jask-opt-bestpractice" checked> 모범 사례 (Best Practice)</label>
         <label class="jask-option-item"><input type="checkbox" id="jask-opt-errorhandling" checked> 에러 처리 (Error Handling)</label>
+    </div>
+</div>
+<div id="jask-version-history" class="jask-version-history" style="display:none;">
+    <div class="jask-options-title">분석 버전 히스토리</div>
+    <div id="jask-version-list" class="jask-version-list">
+        <div class="jask-loading"><aui-spinner size="small"></aui-spinner> 로딩 중...</div>
+    </div>
+    <div id="jask-version-compare" class="jask-version-compare" style="display:none;">
+        <div class="jask-compare-controls">
+            <label>비교:</label>
+            <select id="jask-version-from" class="select"></select>
+            <span>→</span>
+            <select id="jask-version-to" class="select"></select>
+            <button id="jask-compare-versions-btn" class="aui-button aui-button-compact">비교</button>
+        </div>
+        <div id="jask-compare-result" style="display:none;"></div>
     </div>
 </div>
 {/template}

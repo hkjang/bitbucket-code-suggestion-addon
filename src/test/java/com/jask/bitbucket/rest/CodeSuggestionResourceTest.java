@@ -4,6 +4,8 @@ import com.jask.bitbucket.model.AnalysisResponse;
 import com.jask.bitbucket.model.CodeSuggestion;
 import com.jask.bitbucket.security.PermissionCheckService;
 import com.jask.bitbucket.service.AnalysisJobService;
+import com.jask.bitbucket.service.AnalysisVersionService;
+import com.jask.bitbucket.service.BitbucketCommentService;
 import com.jask.bitbucket.service.CodeAnalysisService;
 import com.jask.bitbucket.service.SuggestionService;
 import org.junit.Before;
@@ -14,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -31,6 +34,12 @@ public class CodeSuggestionResourceTest {
     private AnalysisJobService analysisJobService;
 
     @Mock
+    private AnalysisVersionService analysisVersionService;
+
+    @Mock
+    private BitbucketCommentService bitbucketCommentService;
+
+    @Mock
     private PermissionCheckService permissionCheck;
 
     private CodeSuggestionResource resource;
@@ -40,7 +49,8 @@ public class CodeSuggestionResourceTest {
         MockitoAnnotations.openMocks(this);
         resource = new CodeSuggestionResource(
                 codeAnalysisService, suggestionService,
-                analysisJobService, permissionCheck);
+                analysisJobService, analysisVersionService,
+                bitbucketCommentService, permissionCheck);
     }
 
     @Test
@@ -183,5 +193,54 @@ public class CodeSuggestionResourceTest {
         Response response = resource.getSuggestionsForFile(100, 1L, "src/Main.java");
 
         assertEquals(200, response.getStatus());
+    }
+
+    // --- Version History Tests ---
+
+    @Test
+    public void testGetVersionHistory_success() {
+        AnalysisVersionService.VersionInfo v1 = new AnalysisVersionService.VersionInfo();
+        v1.setVersion(1);
+        v1.setSuggestionCount(5);
+
+        when(analysisVersionService.getVersionHistory(1L, 100))
+                .thenReturn(Arrays.asList(v1));
+
+        Response response = resource.getVersionHistory(100, 1L);
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testGetVersionHistory_empty() {
+        when(analysisVersionService.getVersionHistory(1L, 100))
+                .thenReturn(Collections.emptyList());
+
+        Response response = resource.getVersionHistory(100, 1L);
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testCompareVersions_success() {
+        AnalysisVersionService.VersionComparison comparison =
+                new AnalysisVersionService.VersionComparison();
+        comparison.setFromVersion(1);
+        comparison.setToVersion(2);
+        comparison.setSuggestionDelta(-2);
+
+        when(analysisVersionService.compareVersions(1L, 100, 1, 2))
+                .thenReturn(comparison);
+
+        Response response = resource.compareVersions(100, 1L, 1, 2);
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testCompareVersions_missingParams() {
+        Response response = resource.compareVersions(100, 1L, 0, 0);
+
+        assertEquals(400, response.getStatus());
     }
 }

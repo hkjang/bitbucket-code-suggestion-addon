@@ -55,6 +55,10 @@ public interface SuggestionEntity extends Entity {
     String getStatus();
     void setStatus(String status);
 
+    /** Analysis version number this suggestion belongs to */
+    int getVersionNumber();
+    void setVersionNumber(int versionNumber);
+
     long getCreatedAt();
     void setCreatedAt(long createdAt);
 
