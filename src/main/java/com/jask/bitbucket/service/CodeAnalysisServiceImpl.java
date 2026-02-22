@@ -27,39 +27,38 @@ public class CodeAnalysisServiceImpl implements CodeAnalysisService {
 
     private static final Logger log = LoggerFactory.getLogger(CodeAnalysisServiceImpl.class);
 
-    private static final String SYSTEM_PROMPT = """
-            당신은 전문 코드 리뷰어입니다. 주어진 코드 diff를 분석하고 개선 사항을 JSON 배열로 제안합니다.
-
-            각 제안은 다음 JSON 형식이어야 합니다:
-            {
-              "filePath": "파일 경로",
-              "startLine": 시작 줄 번호,
-              "endLine": 끝 줄 번호,
-              "originalCode": "원본 코드",
-              "suggestedCode": "개선된 코드",
-              "explanation": "개선 이유 설명 (한국어)",
-              "severity": "CRITICAL|WARNING|INFO|HINT",
-              "category": "SECURITY|PERFORMANCE|BUG_RISK|CODE_STYLE|BEST_PRACTICE|DUPLICATION|COMPLEXITY|ERROR_HANDLING",
-              "confidence": 0.0~1.0
-            }
-
-            분석 기준:
-            1. **보안(SECURITY)**: SQL 인젝션, XSS, 경로 탐색, 하드코딩된 비밀번호 등
-            2. **성능(PERFORMANCE)**: N+1 쿼리, 불필요한 반복, 메모리 누수, 비효율적 알고리즘
-            3. **버그 위험(BUG_RISK)**: NPE 가능성, 경쟁 조건, 리소스 누수, 잘못된 로직
-            4. **코드 스타일(CODE_STYLE)**: 네이밍 컨벤션, 포맷팅, 일관성
-            5. **모범 사례(BEST_PRACTICE)**: 디자인 패턴, SOLID 원칙, 에러 처리
-            6. **중복(DUPLICATION)**: 반복된 코드, 추출 가능한 메서드
-            7. **복잡도(COMPLEXITY)**: 순환 복잡도, 중첩 깊이, 메서드 길이
-            8. **에러 처리(ERROR_HANDLING)**: 누락된 예외 처리, 포괄적 catch, 에러 무시
-
-            규칙:
-            - 변경된 코드만 분석 (diff에 포함된 라인만)
-            - 확신이 없으면 confidence를 낮게 설정
-            - severity가 높을수록 confidence도 높아야 함
-            - 코드 개선 제안 시 반드시 실행 가능한 코드를 제공
-            - 응답은 반드시 JSON 배열만 반환 (추가 텍스트 없음)
-            """;
+    private static final String SYSTEM_PROMPT = String.join("\n",
+            "당신은 전문 코드 리뷰어입니다. 주어진 코드 diff를 분석하고 개선 사항을 JSON 배열로 제안합니다.",
+            "",
+            "각 제안은 다음 JSON 형식이어야 합니다:",
+            "{",
+            "  \"filePath\": \"파일 경로\",",
+            "  \"startLine\": 시작 줄 번호,",
+            "  \"endLine\": 끝 줄 번호,",
+            "  \"originalCode\": \"원본 코드\",",
+            "  \"suggestedCode\": \"개선된 코드\",",
+            "  \"explanation\": \"개선 이유 설명 (한국어)\",",
+            "  \"severity\": \"CRITICAL|WARNING|INFO|HINT\",",
+            "  \"category\": \"SECURITY|PERFORMANCE|BUG_RISK|CODE_STYLE|BEST_PRACTICE|DUPLICATION|COMPLEXITY|ERROR_HANDLING\",",
+            "  \"confidence\": 0.0~1.0",
+            "}",
+            "",
+            "분석 기준:",
+            "1. **보안(SECURITY)**: SQL 인젝션, XSS, 경로 탐색, 하드코딩된 비밀번호 등",
+            "2. **성능(PERFORMANCE)**: N+1 쿼리, 불필요한 반복, 메모리 누수, 비효율적 알고리즘",
+            "3. **버그 위험(BUG_RISK)**: NPE 가능성, 경쟁 조건, 리소스 누수, 잘못된 로직",
+            "4. **코드 스타일(CODE_STYLE)**: 네이밍 컨벤션, 포맷팅, 일관성",
+            "5. **모범 사례(BEST_PRACTICE)**: 디자인 패턴, SOLID 원칙, 에러 처리",
+            "6. **중복(DUPLICATION)**: 반복된 코드, 추출 가능한 메서드",
+            "7. **복잡도(COMPLEXITY)**: 순환 복잡도, 중첩 깊이, 메서드 길이",
+            "8. **에러 처리(ERROR_HANDLING)**: 누락된 예외 처리, 포괄적 catch, 에러 무시",
+            "",
+            "규칙:",
+            "- 변경된 코드만 분석 (diff에 포함된 라인만)",
+            "- 확신이 없으면 confidence를 낮게 설정",
+            "- severity가 높을수록 confidence도 높아야 함",
+            "- 코드 개선 제안 시 반드시 실행 가능한 코드를 제공",
+            "- 응답은 반드시 JSON 배열만 반환 (추가 텍스트 없음)");
 
     private final LlmClientService llmClient;
     private final PluginSettingsService settingsService;
@@ -373,13 +372,23 @@ public class CodeAnalysisServiceImpl implements CodeAnalysisService {
             return true; // 옵션이 없으면 전부 허용
         }
 
-        return switch (category) {
-            case SECURITY -> options.isCheckSecurity();
-            case PERFORMANCE -> options.isCheckPerformance();
-            case CODE_STYLE, DUPLICATION, COMPLEXITY -> options.isCheckStyle();
-            case BEST_PRACTICE -> options.isCheckBestPractice();
-            case ERROR_HANDLING -> options.isCheckErrorHandling();
-            case BUG_RISK -> true; // BUG_RISK는 항상 포함
-        };
+        switch (category) {
+            case SECURITY:
+                return options.isCheckSecurity();
+            case PERFORMANCE:
+                return options.isCheckPerformance();
+            case CODE_STYLE:
+            case DUPLICATION:
+            case COMPLEXITY:
+                return options.isCheckStyle();
+            case BEST_PRACTICE:
+                return options.isCheckBestPractice();
+            case ERROR_HANDLING:
+                return options.isCheckErrorHandling();
+            case BUG_RISK:
+                return true; // BUG_RISK는 항상 포함
+            default:
+                return true;
+        }
     }
 }

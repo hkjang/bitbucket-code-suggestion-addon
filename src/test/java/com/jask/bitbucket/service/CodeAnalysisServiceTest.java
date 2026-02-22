@@ -44,21 +44,20 @@ public class CodeAnalysisServiceTest {
 
     @Test
     public void testAnalyze_successfulAnalysis() {
-        String llmResponse = """
-                [
-                  {
-                    "filePath": "src/Main.java",
-                    "startLine": 10,
-                    "endLine": 15,
-                    "originalCode": "String password = \\"admin\\";",
-                    "suggestedCode": "String password = System.getenv(\\"DB_PASSWORD\\");",
-                    "explanation": "하드코딩된 비밀번호는 보안 취약점입니다.",
-                    "severity": "CRITICAL",
-                    "category": "SECURITY",
-                    "confidence": 0.95
-                  }
-                ]
-                """;
+        String llmResponse = String.join("\n",
+                "[",
+                "  {",
+                "    \"filePath\": \"src/Main.java\",",
+                "    \"startLine\": 10,",
+                "    \"endLine\": 15,",
+                "    \"originalCode\": \"String password = \\\"admin\\\";\",",
+                "    \"suggestedCode\": \"String password = System.getenv(\\\"DB_PASSWORD\\\");\",",
+                "    \"explanation\": \"하드코딩된 비밀번호는 보안 취약점입니다.\",",
+                "    \"severity\": \"CRITICAL\",",
+                "    \"category\": \"SECURITY\",",
+                "    \"confidence\": 0.95",
+                "  }",
+                "]");
 
         when(llmClientService.chat(any())).thenReturn(llmResponse);
 
@@ -125,19 +124,18 @@ public class CodeAnalysisServiceTest {
     public void testAnalyze_lowConfidenceSuggestionsFiltered() {
         when(settingsService.getMinConfidenceThreshold()).thenReturn(0.8);
 
-        String llmResponse = """
-                [
-                  {
-                    "filePath": "src/Main.java",
-                    "startLine": 1,
-                    "endLine": 1,
-                    "explanation": "Low confidence suggestion",
-                    "severity": "HINT",
-                    "category": "CODE_STYLE",
-                    "confidence": 0.5
-                  }
-                ]
-                """;
+        String llmResponse = String.join("\n",
+                "[",
+                "  {",
+                "    \"filePath\": \"src/Main.java\",",
+                "    \"startLine\": 1,",
+                "    \"endLine\": 1,",
+                "    \"explanation\": \"Low confidence suggestion\",",
+                "    \"severity\": \"HINT\",",
+                "    \"category\": \"CODE_STYLE\",",
+                "    \"confidence\": 0.5",
+                "  }",
+                "]");
 
         when(llmClientService.chat(any())).thenReturn(llmResponse);
 
@@ -181,13 +179,12 @@ public class CodeAnalysisServiceTest {
 
     @Test
     public void testAnalyze_summaryCalculation() {
-        String llmResponse = """
-                [
-                  {"filePath":"a.java","startLine":1,"endLine":1,"explanation":"Critical","severity":"CRITICAL","category":"SECURITY","confidence":0.9},
-                  {"filePath":"a.java","startLine":5,"endLine":5,"explanation":"Warning","severity":"WARNING","category":"PERFORMANCE","confidence":0.8},
-                  {"filePath":"a.java","startLine":10,"endLine":10,"explanation":"Info","severity":"INFO","category":"CODE_STYLE","confidence":0.7}
-                ]
-                """;
+        String llmResponse = String.join("\n",
+                "[",
+                "  {\"filePath\":\"a.java\",\"startLine\":1,\"endLine\":1,\"explanation\":\"Critical\",\"severity\":\"CRITICAL\",\"category\":\"SECURITY\",\"confidence\":0.9},",
+                "  {\"filePath\":\"a.java\",\"startLine\":5,\"endLine\":5,\"explanation\":\"Warning\",\"severity\":\"WARNING\",\"category\":\"PERFORMANCE\",\"confidence\":0.8},",
+                "  {\"filePath\":\"a.java\",\"startLine\":10,\"endLine\":10,\"explanation\":\"Info\",\"severity\":\"INFO\",\"category\":\"CODE_STYLE\",\"confidence\":0.7}",
+                "]");
 
         when(llmClientService.chat(any())).thenReturn(llmResponse);
 
