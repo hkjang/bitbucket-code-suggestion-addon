@@ -21,6 +21,11 @@
         <entity>com.jask.bitbucket.ao.AnalysisJobEntity</entity>
         <entity>com.jask.bitbucket.ao.AuditLogEntity</entity>
         <entity>com.jask.bitbucket.ao.AnalysisVersionEntity</entity>
+        <entity>com.jask.bitbucket.ao.EngineProfileEntity</entity>
+        <entity>com.jask.bitbucket.ao.UsageQuotaEntity</entity>
+        <entity>com.jask.bitbucket.ao.UsageRecordEntity</entity>
+        <entity>com.jask.bitbucket.ao.SettingsSnapshotEntity</entity>
+        <entity>com.jask.bitbucket.ao.PendingChangeEntity</entity>
     </ao>
 
     <!-- ==================== REST Resources ==================== -->
@@ -82,8 +87,12 @@
         <description>관리자 설정 페이지 리소스</description>
         <dependency>com.atlassian.auiplugin:ajs</dependency>
         <dependency>com.atlassian.auiplugin:aui-flag</dependency>
+        <dependency>com.atlassian.auiplugin:aui-spinner</dependency>
+        <dependency>com.atlassian.auiplugin:aui-table-sortable</dependency>
+        <dependency>com.atlassian.auiplugin:aui-lozenge</dependency>
         <resource type="download" name="admin-config.css" location="/css/admin-config.css"/>
         <resource type="download" name="admin-config.js" location="/js/admin-config.js"/>
+        <resource type="soy" name="admin-config-soy" location="/templates/admin-config.soy"/>
         <context>com.jask.bitbucket.code-suggestion-addon.admin</context>
     </web-resource>
 

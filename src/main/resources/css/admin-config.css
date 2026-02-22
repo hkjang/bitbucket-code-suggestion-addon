@@ -1,14 +1,541 @@
-/* Admin Config Page - additional styles when rendered via Soy */
+/* =========================================================================
+   Jask Admin Config - 요건 19: UI 일관성
+   AUI 기반 좌측 네비게이션 + 우측 상세 패널 레이아웃
+   ========================================================================= */
+
+/* Layout */
 .jask-admin-config {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 0 20px;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: #f4f5f7;
 }
 
-.jask-admin-config .admin-section {
+.jask-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: #fff;
+    border-bottom: 2px solid #0052cc;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.jask-admin-header h1 {
+    font-size: 20px;
+    margin: 0;
+    color: #172b4d;
+}
+
+.jask-admin-header h1 .aui-icon {
+    margin-right: 8px;
+}
+
+.jask-admin-header-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.jask-admin-layout {
+    display: flex;
+    min-height: calc(100vh - 65px);
+}
+
+/* Left Navigation */
+.jask-admin-nav {
+    width: 220px;
+    min-width: 220px;
+    background: #fff;
+    border-right: 1px solid #dfe1e6;
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.jask-nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+}
+
+.jask-nav-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    cursor: pointer;
+    color: #42526e;
+    font-size: 14px;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+}
+
+.jask-nav-item:hover {
+    background: #f4f5f7;
+    color: #172b4d;
+}
+
+.jask-nav-item.active {
+    background: #deebff;
+    color: #0052cc;
+    border-left-color: #0052cc;
+    font-weight: 600;
+}
+
+.jask-nav-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.jask-nav-item .aui-icon {
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.jask-nav-label {
+    white-space: nowrap;
+}
+
+.jask-nav-footer {
+    border-top: 1px solid #dfe1e6;
+    padding-top: 8px;
+    margin-top: 8px;
+    list-style: none;
+}
+
+/* Content Area */
+.jask-admin-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    max-width: calc(100% - 220px);
+}
+
+.jask-section {
     background: #fff;
     border-radius: 8px;
     border: 1px solid #dfe1e6;
+    padding: 24px;
     margin-bottom: 20px;
+}
+
+.jask-section h2 {
+    font-size: 18px;
+    color: #172b4d;
+    margin: 0 0 8px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dfe1e6;
+}
+
+.jask-section h2 .aui-icon {
+    margin-right: 8px;
+}
+
+.jask-section h3 {
+    font-size: 15px;
+    color: #42526e;
+    margin: 20px 0 12px 0;
+}
+
+/* Loading */
+.jask-loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: #6b778c;
+}
+
+/* Forms */
+.jask-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+}
+
+.jask-form-grid .field-group {
+    margin-bottom: 0;
+}
+
+.jask-form-grid .field-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #42526e;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.jask-form-grid .field-group input,
+.jask-form-grid .field-group select,
+.jask-form-grid .field-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.jask-form-actions {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #dfe1e6;
+    display: flex;
+    gap: 8px;
+}
+
+.jask-form-panel {
+    background: #f4f5f7;
+    border: 1px solid #dfe1e6;
+    border-radius: 6px;
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.jask-form-panel h3 {
+    margin-top: 0;
+}
+
+.jask-form-inline {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.jask-form-inline input,
+.jask-form-inline select {
+    width: auto;
+}
+
+/* Badges */
+.jask-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.jask-badge-info {
+    background: #deebff;
+    color: #0052cc;
+}
+
+.jask-badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Tables */
+.jask-table {
+    width: 100%;
+    margin-top: 12px;
+}
+
+.jask-table th {
+    background: #f4f5f7;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b778c;
+}
+
+.jask-table td {
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.jask-details-cell {
+    max-width: 250px;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Cards */
+.jask-card-list {
+    margin-top: 16px;
+}
+
+.jask-engine-card {
+    background: #fff;
+    border: 1px solid #dfe1e6;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.jask-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f4f5f7;
+    border-bottom: 1px solid #dfe1e6;
+}
+
+.jask-card-header h3 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.jask-card-body {
+    padding: 12px 16px;
+}
+
+.jask-card-body dl {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 4px 12px;
+    margin: 0;
+}
+
+.jask-card-body dt {
+    font-weight: 600;
+    color: #6b778c;
+    font-size: 12px;
+}
+
+.jask-card-body dd {
+    margin: 0;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.jask-card-actions {
+    padding: 8px 16px;
+    border-top: 1px solid #dfe1e6;
+    display: flex;
+    gap: 8px;
+}
+
+/* Dashboard Cards */
+.jask-dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.jask-dash-card {
+    background: #fff;
+    border: 1px solid #dfe1e6;
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+}
+
+.jask-dash-value {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.jask-dash-title {
+    font-size: 12px;
+    color: #6b778c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.jask-dash-success .jask-dash-value { color: #00875a; }
+.jask-dash-warning .jask-dash-value { color: #ff991f; }
+.jask-dash-error .jask-dash-value { color: #de350b; }
+.jask-dash-info .jask-dash-value { color: #0052cc; }
+
+.jask-dash-success { border-left: 4px solid #00875a; }
+.jask-dash-warning { border-left: 4px solid #ff991f; }
+.jask-dash-error { border-left: 4px solid #de350b; }
+.jask-dash-info { border-left: 4px solid #0052cc; }
+
+/* Templates Grid */
+.jask-templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.jask-template-card {
+    background: #fff;
+    border: 1px solid #dfe1e6;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.jask-template-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+}
+
+.jask-template-card p {
+    font-size: 13px;
+    color: #6b778c;
+    margin: 0 0 8px 0;
+}
+
+.jask-template-card details {
+    font-size: 12px;
+}
+
+.jask-template-card pre {
+    font-size: 11px;
+    background: #f4f5f7;
+    padding: 8px;
+    border-radius: 4px;
+    overflow-x: auto;
+    max-height: 200px;
+}
+
+/* Filter Bar */
+.jask-filter-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.jask-filter-bar input,
+.jask-filter-bar select {
+    width: auto;
+}
+
+/* Pagination */
+.jask-pagination {
+    display: flex;
+    gap: 4px;
+    margin-top: 12px;
+    justify-content: center;
+}
+
+/* Diagnostics */
+.jask-status-banner {
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 16px;
+    margin: 12px 0;
+}
+
+.jask-status-success { background: #e3fcef; color: #006644; border: 1px solid #abf5d1; }
+.jask-status-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.jask-status-error { background: #ffebe6; color: #bf2600; border: 1px solid #ffbdad; }
+
+.jask-diag-checks {
+    margin: 16px 0;
+}
+
+.jask-diag-check {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f4f5f7;
+    font-size: 14px;
+}
+
+.jask-diag-check .aui-icon {
+    margin-right: 8px;
+}
+
+.jask-diag-check details {
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.jask-diag-check pre {
+    font-size: 11px;
+    background: #f4f5f7;
+    padding: 8px;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow: auto;
+}
+
+.jask-sysinfo {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 4px 12px;
+}
+
+.jask-sysinfo dt {
+    font-weight: 600;
+    color: #6b778c;
+    font-size: 13px;
+}
+
+.jask-sysinfo dd {
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Alerts */
+.jask-alert-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 12px 0;
+}
+
+.jask-alert-list .aui-message {
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.jask-alert-time {
+    font-size: 11px;
+    color: #6b778c;
+}
+
+/* Status Colors for various elements */
+.jask-success { color: #00875a; }
+.jask-error { color: #de350b; }
+
+/* Code elements */
+code {
+    background: #f4f5f7;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .jask-admin-layout {
+        flex-direction: column;
+    }
+    .jask-admin-nav {
+        width: 100%;
+        min-width: auto;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0;
+        border-right: none;
+        border-bottom: 1px solid #dfe1e6;
+    }
+    .jask-nav-list {
+        display: flex;
+    }
+    .jask-nav-item {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+        padding: 12px 16px;
+    }
+    .jask-nav-item.active {
+        border-bottom-color: #0052cc;
+        border-left-color: transparent;
+    }
+    .jask-nav-footer {
+        display: flex;
+        border-top: none;
+        border-left: 1px solid #dfe1e6;
+        margin: 0;
+        padding: 0;
+        padding-left: 8px;
+    }
+    .jask-admin-content {
+        max-width: 100%;
+    }
+    .jask-form-grid {
+        grid-template-columns: 1fr;
+    }
+    .jask-dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
