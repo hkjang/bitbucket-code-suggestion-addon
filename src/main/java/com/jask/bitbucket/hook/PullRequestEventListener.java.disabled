@@ -1,0 +1,226 @@
+package com.jask.bitbucket.hook;
+
+import com.atlassian.bitbucket.content.ContentService;
+import com.atlassian.bitbucket.content.DiffContentCallback;
+import com.atlassian.bitbucket.event.pull.PullRequestOpenedEvent;
+import com.atlassian.bitbucket.pull.PullRequest;
+import com.atlassian.bitbucket.pull.PullRequestChangesRequest;
+import com.atlassian.bitbucket.pull.PullRequestService;
+import com.atlassian.event.api.EventListener;
+import com.atlassian.event.api.EventPublisher;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.google.gson.Gson;
+import com.jask.bitbucket.config.PluginSettingsService;
+import com.jask.bitbucket.model.AnalysisRequest;
+import com.jask.bitbucket.service.AnalysisJobService;
+import com.jask.bitbucket.service.SuggestionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Listens for Pull Request events and triggers automatic code analysis.
+ */
+@Named("prEventListener")
+public class PullRequestEventListener {
+
+    private static final Logger log = LoggerFactory.getLogger(PullRequestEventListener.class);
+
+    private final EventPublisher eventPublisher;
+    private final PullRequestService pullRequestService;
+    private final ContentService contentService;
+    private final AnalysisJobService analysisJobService;
+    private final SuggestionService suggestionService;
+    private final PluginSettingsService settingsService;
+    private final Gson gson;
+
+    @Inject
+    public PullRequestEventListener(@ComponentImport EventPublisher eventPublisher,
+                                     @ComponentImport PullRequestService pullRequestService,
+                                     @ComponentImport ContentService contentService,
+                                     AnalysisJobService analysisJobService,
+                                     SuggestionService suggestionService,
+                                     PluginSettingsService settingsService) {
+        this.eventPublisher = eventPublisher;
+        this.pullRequestService = pullRequestService;
+        this.contentService = contentService;
+        this.analysisJobService = analysisJobService;
+        this.suggestionService = suggestionService;
+        this.settingsService = settingsService;
+        this.gson = new Gson();
+    }
+
+    @PostConstruct
+    public void init() {
+        eventPublisher.register(this);
+        log.info("Jask 코드 제안 PR 이벤트 리스너 등록 완료");
+    }
+
+    @PreDestroy
+    public void destroy() {
+        eventPublisher.unregister(this);
+        log.info("Jask 코드 제안 PR 이벤트 리스너 해제 완료");
+    }
+
+    /**
+     * Handle PR opened event - trigger initial analysis via job queue.
+     */
+    @EventListener
+    public void onPullRequestOpened(PullRequestOpenedEvent event) {
+        if (!settingsService.isAutoAnalysisEnabled()) {
+            log.debug("자동 분석이 비활성화되어 있습니다");
+            return;
+        }
+
+        PullRequest pr = event.getPullRequest();
+        log.info("PR #{} 생성 감지 - 분석 잡 등록: {}", pr.getId(), pr.getTitle());
+
+        submitAnalysisJob(pr);
+    }
+
+    /**
+     * Handle PR rescoped event (new commits pushed) - re-analyze via job queue.
+     * NOTE: This event is not available in current Bitbucket version
+     */
+    /*
+    @EventListener
+    public void onPullRequestRescoped(PullRequestRescoped event) {
+        if (!settingsService.isAutoAnalysisEnabled()) {
+            return;
+        }
+
+        PullRequest pr = event.getPullRequest();
+        log.info("PR #{} 업데이트 감지 - 재분석 잡 등록: {}", pr.getId(), pr.getTitle());
+
+        submitAnalysisJob(pr);
+    }
+    */
+
+    /**
+     * PR에서 diff를 추출하고 비동기 분석 잡을 큐에 등록합니다.
+     */
+    private void submitAnalysisJob(PullRequest pr) {
+        try {
+            int repoId = pr.getToRef().getRepository().getId();
+            String projectKey = pr.getToRef().getRepository().getProject().getKey();
+            String repoSlug = pr.getToRef().getRepository().getSlug();
+
+            // Build analysis request from PR changes
+            AnalysisRequest request = new AnalysisRequest();
+            request.setPullRequestId(pr.getId());
+            request.setRepositoryId(repoId);
+            request.setProjectKey(projectKey);
+            request.setRepositorySlug(repoSlug);
+
+            List<AnalysisRequest.FileDiff> fileDiffs = extractFileDiffs(pr);
+            request.setFileDiffs(fileDiffs);
+
+            if (fileDiffs.isEmpty()) {
+                log.info("PR #{} 에 분석할 파일이 없습니다", pr.getId());
+                return;
+            }
+
+            // 비동기 잡 큐에 등록 (워커가 실제 분석 수행)
+            String requestPayload = gson.toJson(request);
+            long jobId = analysisJobService.submitJob(
+                    pr.getId(), repoId, projectKey, repoSlug,
+                    requestPayload, "system");
+
+            log.info("PR #{} 분석 잡 등록 완료: jobId={}", pr.getId(), jobId);
+
+        } catch (Exception e) {
+            log.error("PR #{} 분석 잡 등록 실패: {}", pr.getId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Extract file diffs from a pull request.
+     */
+    private List<AnalysisRequest.FileDiff> extractFileDiffs(PullRequest pr) {
+        List<AnalysisRequest.FileDiff> fileDiffs = new ArrayList<>();
+
+        try {
+            PullRequestChangesRequest changesRequest = new PullRequestChangesRequest.Builder(pr)
+                    .build();
+
+            pullRequestService.streamChanges(changesRequest, change -> {
+                try {
+                    AnalysisRequest.FileDiff fileDiff = new AnalysisRequest.FileDiff();
+                    fileDiff.setFilePath(change.getPath().toString());
+
+                    // Get the diff content
+                    ByteArrayOutputStream diffOutput = new ByteArrayOutputStream();
+                    contentService.streamDiff(
+                            pr.getToRef().getRepository(),
+                            pr.getFromRef().getLatestCommit(),
+                            pr.getToRef().getLatestCommit(),
+                            change.getPath().toString(),
+                            new OutputStreamDiffContentCallback(diffOutput));
+
+                    fileDiff.setDiff(diffOutput.toString("UTF-8"));
+                    fileDiffs.add(fileDiff);
+                } catch (Exception e) {
+                    log.warn("파일 diff 추출 실패: {}", change.getPath(), e);
+                }
+
+                return true; // continue iteration
+            });
+        } catch (Exception e) {
+            log.error("PR 변경사항 추출 실패: {}", e.getMessage(), e);
+        }
+
+        return fileDiffs;
+    }
+
+    /**
+     * Simple callback to write diff content to an OutputStream.
+     */
+    private static class OutputStreamDiffContentCallback implements DiffContentCallback {
+        private final OutputStream outputStream;
+
+        OutputStreamDiffContentCallback(OutputStream outputStream) {
+            this.outputStream = outputStream;
+        }
+
+        @Override
+        public void onDiffStart(String srcPath, String dstPath) {}
+
+        @Override
+        public void onDiffEnd(String srcPath, String dstPath) {}
+
+        @Override
+        public void onHunkStart(int srcLine, int srcSpan, int dstLine, int dstSpan, String extra) {}
+
+        @Override
+        public void onHunkEnd(int srcLine, int srcSpan, int dstLine, int dstSpan) {}
+
+        @Override
+        public void onSegmentStart(DiffContentCallback.SegmentType type) {}
+
+        @Override
+        public void onSegmentEnd(DiffContentCallback.SegmentType type) {}
+
+        @Override
+        public void onSegmentLine(String line, DiffContentCallback.SegmentType type, int srcLine, int dstLine) {
+            try {
+                String prefix = switch (type) {
+                    case ADDED -> "+";
+                    case REMOVED -> "-";
+                    default -> " ";
+                };
+                outputStream.write((prefix + line + "\n").getBytes("UTF-8"));
+            } catch (IOException e) {
+                // Ignore write errors
+            }
+        }
+    }
+}

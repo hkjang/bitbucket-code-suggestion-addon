@@ -1,0 +1,119 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+*.iws
+*.ipr
+
+# Build
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+
+# Maven
+.m2/
+dependency-reduced-pom.xml
+
+# Gradle
+.gradle/
+gradle/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# OS
+Thumbs.db
+.DS_Store
+*.log
+*.pid
+
+# Local development
+.env
+.env.local
+local.properties
+*.local
+
+# Test coverage
+coverage/
+.coverage
+lcov.info
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*~
+
+# Bitbucket/Git
+.git/
+.gitkeep
+
+# JDK
+.jdk/
+.java-version
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# IntelliJ
+*.iml
+*.iws
+*.ipr
+.idea/
+
+# VS Code
+.vscode/
+launch.json
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
