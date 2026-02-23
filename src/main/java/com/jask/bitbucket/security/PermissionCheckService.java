@@ -1,11 +1,7 @@
 package com.jask.bitbucket.security;
 
-import com.atlassian.bitbucket.permission.Permission;
-import com.atlassian.bitbucket.permission.PermissionService;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.repository.RepositoryService;
-import com.atlassian.bitbucket.user.ApplicationUser;
-import com.atlassian.bitbucket.user.SecurityService;
 import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
@@ -38,7 +34,6 @@ public class PermissionCheckService {
     private static final Logger log = LoggerFactory.getLogger(PermissionCheckService.class);
 
     private final UserManager userManager;
-    private final PermissionService permissionService;
     private final RepositoryService repositoryService;
 
     /**
@@ -82,10 +77,8 @@ public class PermissionCheckService {
 
     @Inject
     public PermissionCheckService(@ComponentImport UserManager userManager,
-                                   @ComponentImport PermissionService permissionService,
                                    @ComponentImport RepositoryService repositoryService) {
         this.userManager = userManager;
-        this.permissionService = permissionService;
         this.repositoryService = repositoryService;
     }
 

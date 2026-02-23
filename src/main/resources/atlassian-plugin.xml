@@ -13,6 +13,11 @@
         <param name="configure.url">/plugins/servlet/code-suggestion/admin</param>
     </plugin-info>
 
+    <!-- ==================== Component Imports ==================== -->
+    <!-- SAL UserManager - used by SysAdminCondition and AdminConfigServlet -->
+    <component-import key="salUserManager"
+                      interface="com.atlassian.sal.api.user.UserManager"/>
+
     <!-- ==================== Active Objects ==================== -->
     <ao key="ao-module">
         <description>Active Objects 모듈 - 코드 제안 데이터 저장</description>
@@ -61,7 +66,8 @@
     </web-item>
 
     <!-- ==================== Web Panel (PR Diff Inline) ==================== -->
-    <web-panel key="code-suggestion-diff-panel" name="코드 제안 인라인 패널"
+    <!-- NOTE: SuggestionContextProvider is disabled due to Bitbucket API compatibility issues -->
+    <!-- <web-panel key="code-suggestion-diff-panel" name="코드 제안 인라인 패널"
                location="bitbucket.pull-request.diff.comment"
                weight="100">
         <description>Diff 뷰에서 인라인 코드 제안 표시</description>
@@ -69,7 +75,7 @@
                   location="/templates/pr-suggestion-panel.soy"/>
         <client-context-provider
                 class="com.jask.bitbucket.hook.SuggestionContextProvider"/>
-    </web-panel>
+    </web-panel> -->
 
     <!-- ==================== Web Resources ==================== -->
     <web-resource key="code-suggestion-resources" name="코드 제안 리소스">
@@ -110,9 +116,7 @@
         <description>전역 관리자 메뉴에 코드 제안 설정 링크 추가</description>
         <label key="admin.menu.label">AI 코드 제안 설정</label>
         <link linkId="code-suggestion-admin-link">/plugins/servlet/code-suggestion/admin</link>
-        <condition class="com.atlassian.bitbucket.web.conditions.HasGlobalPermissionCondition">
-            <param name="permission">SYS_ADMIN</param>
-        </condition>
+        <condition class="com.jask.bitbucket.web.SysAdminCondition"/>
     </web-item>
 
 </atlassian-plugin>

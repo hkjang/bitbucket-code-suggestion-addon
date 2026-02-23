@@ -132,7 +132,7 @@ public class LlmClientServiceImpl implements LlmClientService {
                                    String apiKey, LlmEngineAdapter adapter) throws LlmException {
         Request.Builder httpRequestBuilder = new Request.Builder()
                 .url(endpoint)
-                .post(RequestBody.create(requestBody, JSON_MEDIA_TYPE));
+                .post(RequestBody.create(JSON_MEDIA_TYPE, requestBody));
 
         if (apiKey != null && !apiKey.isEmpty()) {
             httpRequestBuilder.addHeader("Authorization", "Bearer " + apiKey);
