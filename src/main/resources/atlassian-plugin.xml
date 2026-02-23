@@ -111,7 +111,10 @@
         <description>전역 관리자 메뉴에 코드 제안 설정 링크 추가</description>
         <label key="admin.menu.label">AI 코드 제안 설정</label>
         <link linkId="code-suggestion-admin-link">/plugins/servlet/code-suggestion/admin</link>
-        <condition class="com.jask.bitbucket.web.SysAdminCondition"/>
+        <!-- NOTE: condition 제거 - atl.admin 섹션 자체가 관리자 전용이며,
+             AdminConfigServlet에서 이중으로 권한 검증함.
+             StashWebFragmentHelper가 condition 빈 생성 시 Spring context 타이밍 이슈로
+             UserManager 주입 불가 -->
     </web-item>
 
 </atlassian-plugin>

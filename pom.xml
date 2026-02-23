@@ -85,14 +85,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Atlassian Plugin Web Fragment API (Condition interface) -->
-        <dependency>
-            <groupId>com.atlassian.plugins</groupId>
-            <artifactId>atlassian-plugins-webfragment-api</artifactId>
-            <version>5.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Servlet API -->
         <dependency>
             <groupId>javax.servlet</groupId>
