@@ -28,10 +28,6 @@
         <entity>com.jask.bitbucket.ao.PendingChangeEntity</entity>
     </ao>
 
-    <!-- ==================== Component Imports ==================== -->
-    <component-import key="permissionService"
-                      interface="com.atlassian.bitbucket.permission.PermissionService"/>
-
     <!-- ==================== REST Resources ==================== -->
     <rest key="code-suggestion-rest" path="/code-suggestion" version="1.0">
         <description>코드 제안 REST API</description>
