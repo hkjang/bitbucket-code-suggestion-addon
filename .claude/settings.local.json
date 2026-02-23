@@ -6,7 +6,19 @@
       "Bash(where:*)",
       "Bash(ls:*)",
       "Bash(echo:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch(domain:confluence.atlassian.com)",
+      "WebFetch(domain:developer.atlassian.com)",
+      "WebFetch(domain:docs.atlassian.com)",
+      "Bash(mvn dependency:tree:*)",
+      "Bash(mvn help:describe:*)",
+      "Bash(unzip:*)",
+      "Bash(export JAVA_HOME=\"/c/tools/java/jdk-17.0.10+7\")",
+      "Bash(export M2_HOME=\"/c/tools/maven/apache-maven-3.9.12\")",
+      "Bash(export PATH=\"$M2_HOME/bin:$JAVA_HOME/bin:$PATH\")",
+      "Bash(mvn clean package:*)",
+      "Bash(\"/c/tools/maven/apache-maven-3.9.12/bin/mvn.cmd\" -version)",
+      "Bash(JAVA_HOME=\"C:\\\\\\\\tools\\\\\\\\java\\\\\\\\jdk-17.0.10+7\" \"C:\\\\\\\\tools\\\\\\\\maven\\\\\\\\apache-maven-3.9.12\\\\\\\\bin\\\\\\\\mvn.cmd\":*)"
     ]
   }
 }

@@ -13,11 +13,6 @@
         <param name="configure.url">/plugins/servlet/code-suggestion/admin</param>
     </plugin-info>
 
-    <!-- ==================== Component Imports ==================== -->
-    <!-- SAL UserManager - used by SysAdminCondition and AdminConfigServlet -->
-    <component-import key="salUserManager"
-                      interface="com.atlassian.sal.api.user.UserManager"/>
-
     <!-- ==================== Active Objects ==================== -->
     <ao key="ao-module">
         <description>Active Objects 모듈 - 코드 제안 데이터 저장</description>
