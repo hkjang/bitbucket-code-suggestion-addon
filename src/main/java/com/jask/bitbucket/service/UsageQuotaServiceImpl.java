@@ -100,7 +100,7 @@ public class UsageQuotaServiceImpl implements UsageQuotaService {
             entity.setEstimatedCostMicro(record.getEstimatedCostMicro());
             entity.setLatencyMs(record.getLatencyMs());
             entity.setSuccess(record.isSuccess());
-            entity.setTimestamp(System.currentTimeMillis());
+            entity.setRecordedAt(System.currentTimeMillis());
             entity.save();
         } catch (Exception e) {
             log.error("사용량 기록 실패: {}", e.getMessage(), e);
@@ -117,10 +117,10 @@ public class UsageQuotaServiceImpl implements UsageQuotaService {
         UsageRecordEntity[] records;
         if (projectFilter != null) {
             records = ao.find(UsageRecordEntity.class,
-                    Query.select().where("PROJECT_KEY = ? AND TIMESTAMP >= ?", projectFilter, periodStart));
+                    Query.select().where("PROJECT_KEY = ? AND RECORDED_AT >= ?", projectFilter, periodStart));
         } else {
             records = ao.find(UsageRecordEntity.class,
-                    Query.select().where("TIMESTAMP >= ?", periodStart));
+                    Query.select().where("RECORDED_AT >= ?", periodStart));
         }
 
         int totalCalls = records.length;
@@ -192,11 +192,11 @@ public class UsageQuotaServiceImpl implements UsageQuotaService {
         UsageRecordEntity[] records;
         if ("GLOBAL".equals(scope)) {
             records = ao.find(UsageRecordEntity.class,
-                    Query.select().where("TIMESTAMP >= ?", startTime).order("TIMESTAMP ASC"));
+                    Query.select().where("RECORDED_AT >= ?", startTime).order("RECORDED_AT ASC"));
         } else {
             records = ao.find(UsageRecordEntity.class,
-                    Query.select().where("PROJECT_KEY = ? AND TIMESTAMP >= ?", scopeKey, startTime)
-                            .order("TIMESTAMP ASC"));
+                    Query.select().where("PROJECT_KEY = ? AND RECORDED_AT >= ?", scopeKey, startTime)
+                            .order("RECORDED_AT ASC"));
         }
 
         // 일별 집계
@@ -215,7 +215,7 @@ public class UsageQuotaServiceImpl implements UsageQuotaService {
         }
 
         for (UsageRecordEntity r : records) {
-            String dateStr = sdf.format(new Date(r.getTimestamp()));
+            String dateStr = sdf.format(new Date(r.getRecordedAt()));
             DailyUsageStat stat = dailyMap.get(dateStr);
             if (stat != null) {
                 stat.setCalls(stat.getCalls() + 1);
@@ -238,10 +238,10 @@ public class UsageQuotaServiceImpl implements UsageQuotaService {
         UsageRecordEntity[] records;
         if ("global".equals(scopeKey)) {
             records = ao.find(UsageRecordEntity.class,
-                    Query.select().where("TIMESTAMP >= ?", periodStart));
+                    Query.select().where("RECORDED_AT >= ?", periodStart));
         } else {
             records = ao.find(UsageRecordEntity.class,
-                    Query.select().where("PROJECT_KEY = ? AND TIMESTAMP >= ?", scopeKey, periodStart));
+                    Query.select().where("PROJECT_KEY = ? AND RECORDED_AT >= ?", scopeKey, periodStart));
         }
 
         int currentCalls = records.length;

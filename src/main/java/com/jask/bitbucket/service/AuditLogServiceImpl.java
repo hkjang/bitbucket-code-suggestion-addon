@@ -40,7 +40,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             entry.setTargetId(targetId);
             entry.setDetails(details);
             entry.setIpAddress(ipAddress);
-            entry.setTimestamp(System.currentTimeMillis());
+            entry.setRecordedAt(System.currentTimeMillis());
             entry.save();
 
             log.debug("감사 로그 기록: type={}, user={}, target={}/{}",
@@ -55,7 +55,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     public List<AuditEntry> getAuditLog(int page, int pageSize) {
         AuditLogEntity[] entities = ao.find(AuditLogEntity.class,
                 Query.select()
-                        .order("TIMESTAMP DESC")
+                        .order("RECORDED_AT DESC")
                         .limit(pageSize)
                         .offset(page * pageSize));
         return toEntries(entities);
@@ -66,7 +66,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         AuditLogEntity[] entities = ao.find(AuditLogEntity.class,
                 Query.select()
                         .where("USERNAME = ?", username)
-                        .order("TIMESTAMP DESC")
+                        .order("RECORDED_AT DESC")
                         .limit(pageSize)
                         .offset(page * pageSize));
         return toEntries(entities);
@@ -77,7 +77,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         AuditLogEntity[] entities = ao.find(AuditLogEntity.class,
                 Query.select()
                         .where("EVENT_TYPE = ?", eventType)
-                        .order("TIMESTAMP DESC")
+                        .order("RECORDED_AT DESC")
                         .limit(pageSize)
                         .offset(page * pageSize));
         return toEntries(entities);
@@ -99,7 +99,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             entry.setTargetId(entity.getTargetId());
             entry.setDetails(entity.getDetails());
             entry.setIpAddress(entity.getIpAddress());
-            entry.setTimestamp(entity.getTimestamp());
+            entry.setTimestamp(entity.getRecordedAt());
             entries.add(entry);
         }
         return entries;

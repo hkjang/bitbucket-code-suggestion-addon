@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(mvn compile:*)",
+      "Bash(where:*)",
+      "Bash(ls:*)",
+      "Bash(echo:*)"
     ]
   }
 }

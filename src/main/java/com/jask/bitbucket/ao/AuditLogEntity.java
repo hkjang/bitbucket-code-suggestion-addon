@@ -59,6 +59,6 @@ public interface AuditLogEntity extends Entity {
      * 이벤트 발생 시간 (epoch ms)
      */
     @Indexed
-    long getTimestamp();
-    void setTimestamp(long timestamp);
+    long getRecordedAt();
+    void setRecordedAt(long recordedAt);
 }
