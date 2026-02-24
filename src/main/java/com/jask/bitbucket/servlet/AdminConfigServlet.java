@@ -4,8 +4,6 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.auth.LoginUriProvider;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
-import com.atlassian.soy.renderer.SoyException;
-import com.atlassian.soy.renderer.SoyTemplateRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Servlet for the admin configuration page.
@@ -30,15 +26,12 @@ public class AdminConfigServlet extends HttpServlet {
 
     private final UserManager userManager;
     private final LoginUriProvider loginUriProvider;
-    private final SoyTemplateRenderer soyRenderer;
 
     @Inject
     public AdminConfigServlet(@ComponentImport UserManager userManager,
-                               @ComponentImport LoginUriProvider loginUriProvider,
-                               @ComponentImport SoyTemplateRenderer soyRenderer) {
+                               @ComponentImport LoginUriProvider loginUriProvider) {
         this.userManager = userManager;
         this.loginUriProvider = loginUriProvider;
-        this.soyRenderer = soyRenderer;
     }
 
     @Override
@@ -59,22 +52,9 @@ public class AdminConfigServlet extends HttpServlet {
             return;
         }
 
-        // Render admin page
+        // Render admin page using HTML template
         resp.setContentType("text/html;charset=UTF-8");
-
-        try {
-            Map<String, Object> context = new HashMap<>();
-            context.put("currentUser", user.getUsername());
-
-            soyRenderer.render(resp.getWriter(),
-                    "com.jask.bitbucket.code-suggestion-addon:admin-resources",
-                    "jask.admin.configPage",
-                    context);
-        } catch (SoyException e) {
-            log.error("관리자 설정 페이지 렌더링 실패: {}", e.getMessage(), e);
-            // Fallback to raw HTML
-            renderFallbackHtml(resp);
-        }
+        renderAdminHtml(req, resp);
     }
 
     private void redirectToLogin(HttpServletRequest req, HttpServletResponse resp)
@@ -83,11 +63,16 @@ public class AdminConfigServlet extends HttpServlet {
         resp.sendRedirect(loginUriProvider.getLoginUri(currentUri).toASCIIString());
     }
 
-    private void renderFallbackHtml(HttpServletResponse resp) throws IOException {
-        resp.getWriter().write(buildAdminHtml());
+    private void renderAdminHtml(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String html = loadAdminHtml();
+        // 컨텍스트 경로를 HTML에 동적 주입 (REST API 호출 시 올바른 경로 사용)
+        String contextPath = req.getContextPath();
+        String contextScript = "<script>window.CONTEXT_PATH='" + contextPath + "';</script>";
+        html = html.replace("<body>", "<body>" + contextScript);
+        resp.getWriter().write(html);
     }
 
-    private String buildAdminHtml() {
+    private String loadAdminHtml() {
         try {
             // Java 8 호환성: 클래스패스에서 HTML 파일 읽기
             java.io.InputStream is = this.getClass().getResourceAsStream("/templates/admin-config.html");

@@ -155,7 +155,7 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        var REST_BASE = (window.AJS ? AJS.contextPath() : '') + '/rest/code-suggestion/1.0/admin';
+        var REST_BASE = (window.CONTEXT_PATH || (window.AJS ? AJS.contextPath() : '')) + '/rest/code-suggestion/1.0/admin';
 
         function loadSettings() {
             fetch(REST_BASE + '/settings')
