@@ -1,14 +1,12 @@
 package com.jask.bitbucket.servlet;
 
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.auth.LoginUriProvider;
+import com.atlassian.sal.api.component.ComponentLocator;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -18,25 +16,54 @@ import java.net.URI;
 
 /**
  * Servlet for the admin configuration page.
+ *
+ * Spring Scanner의 @Named/@Inject/@ComponentImport 어노테이션을 사용하지 않음.
+ * Bitbucket 6.x의 플러그인 프레임워크가 <servlet> 모듈 디스크립터를 처리할 때
+ * 리플렉션으로 기본 생성자를 호출하여 인스턴스를 생성하므로,
+ * SAL ComponentLocator를 통해 서비스를 수동 조회함.
  */
-@Named("adminConfigServlet")
 public class AdminConfigServlet extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(AdminConfigServlet.class);
 
-    private final UserManager userManager;
-    private final LoginUriProvider loginUriProvider;
+    private volatile UserManager userManager;
+    private volatile LoginUriProvider loginUriProvider;
 
-    @Inject
-    public AdminConfigServlet(@ComponentImport UserManager userManager,
-                               @ComponentImport LoginUriProvider loginUriProvider) {
-        this.userManager = userManager;
-        this.loginUriProvider = loginUriProvider;
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        try {
+            this.userManager = ComponentLocator.getComponent(UserManager.class);
+            this.loginUriProvider = ComponentLocator.getComponent(LoginUriProvider.class);
+            log.info("AdminConfigServlet 초기화 완료 - UserManager: {}, LoginUriProvider: {}",
+                    userManager != null, loginUriProvider != null);
+        } catch (Exception e) {
+            log.error("AdminConfigServlet 초기화 중 서비스 조회 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    private void ensureServices() {
+        if (userManager == null) {
+            userManager = ComponentLocator.getComponent(UserManager.class);
+        }
+        if (loginUriProvider == null) {
+            loginUriProvider = ComponentLocator.getComponent(LoginUriProvider.class);
+        }
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+
+        // Lazy init 폴백 (init() 시점에 서비스가 아직 준비되지 않았을 경우)
+        ensureServices();
+
+        if (userManager == null) {
+            log.error("UserManager를 조회할 수 없습니다.");
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "내부 오류: 사용자 관리 서비스를 사용할 수 없습니다.");
+            return;
+        }
 
         // Check authentication
         UserProfile user = userManager.getRemoteUser(req);
@@ -59,8 +86,12 @@ public class AdminConfigServlet extends HttpServlet {
 
     private void redirectToLogin(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
-        URI currentUri = URI.create(req.getRequestURL().toString());
-        resp.sendRedirect(loginUriProvider.getLoginUri(currentUri).toASCIIString());
+        if (loginUriProvider != null) {
+            URI currentUri = URI.create(req.getRequestURL().toString());
+            resp.sendRedirect(loginUriProvider.getLoginUri(currentUri).toASCIIString());
+        } else {
+            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
+        }
     }
 
     private void renderAdminHtml(HttpServletRequest req, HttpServletResponse resp) throws IOException {
